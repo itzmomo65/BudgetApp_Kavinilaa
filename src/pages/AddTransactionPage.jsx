@@ -1,0 +1,298 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import API from "../services/api";
+import Navbar from "../components/Navbar";
+import Sidebar from "../components/Sidebar";
+
+function AddTransactionPage() {
+  const [profile, setProfile] = useState(null);
+  const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState("expense");
+  const [category, setCategory] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      API.get("/user/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then(res => setProfile(res.data))
+        .catch(err => {
+          console.log("Profile fetch failed:", err);
+          setProfile({ name: "User", email: "user@example.com" });
+        });
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      await API.post("/transactions", {
+        amount: parseFloat(amount),
+        description,
+        type,
+        category,
+        date
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSuccess("Transaction added successfully!");
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to add transaction");
+    }
+  };
+
+  if (!profile) return (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+      <div style={{ color: "#A084E8", fontSize: "18px" }}>Loading...</div>
+    </div>
+  );
+
+  return (
+    <>
+      <Navbar profile={profile} />
+      <div style={{
+        minHeight: "calc(100vh - 80px)",
+        background: "linear-gradient(135deg, #E7DDFF 0%, #F5F2FF 50%, #FFFFFF 100%)",
+        padding: "20px",
+        display: "flex",
+        gap: "20px"
+      }}>
+        <Sidebar />
+        <div style={{
+          flex: 1,
+          maxWidth: "600px",
+          margin: "0 auto"
+        }}>
+          <div style={{
+            background: "rgba(255, 255, 255, 0.9)",
+            backdropFilter: "blur(10px)",
+            padding: "40px",
+            borderRadius: "24px",
+            boxShadow: "0 25px 50px rgba(231, 221, 255, 0.3)",
+            border: "1px solid rgba(231, 221, 255, 0.5)"
+          }}>
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <div style={{
+                width: "60px",
+                height: "60px",
+                background: "linear-gradient(135deg, #E7DDFF, #D4C5FF)",
+                borderRadius: "50%",
+                margin: "0 auto 20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "24px"
+              }}>$</div>
+              <h1 style={{
+                color: "#4A4A4A",
+                fontSize: "28px",
+                fontWeight: "700",
+                margin: "0 0 8px 0"
+              }}>Add Transaction</h1>
+              <p style={{ color: "#8B8B8B", margin: 0 }}>Record your income or expense</p>
+              {type === "income" && (
+                <p style={{ color: "#00B894", fontSize: "12px", margin: "8px 0 0 0", fontStyle: "italic" }}>
+                  💡 Include savings goal names in description to auto-update progress
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <div style={{
+                background: "rgba(255, 107, 107, 0.1)",
+                color: "#D63031",
+                padding: "14px 16px",
+                borderRadius: "12px",
+                marginBottom: "20px",
+                border: "1px solid rgba(255, 107, 107, 0.2)"
+              }}>{error}</div>
+            )}
+
+            {success && (
+              <div style={{
+                background: "rgba(0, 184, 148, 0.1)",
+                color: "#00B894",
+                padding: "14px 16px",
+                borderRadius: "12px",
+                marginBottom: "20px",
+                border: "1px solid rgba(0, 184, 148, 0.2)",
+                textAlign: "center"
+              }}>{success}</div>
+            )}
+
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setType("income");
+                    setCategory("");
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    border: type === "income" ? "2px solid #00B894" : "2px solid #E7DDFF",
+                    borderRadius: "12px",
+                    background: type === "income" ? "rgba(0, 184, 148, 0.1)" : "rgba(231, 221, 255, 0.05)",
+                    color: type === "income" ? "#00B894" : "#8B8B8B",
+                    cursor: "pointer",
+                    fontWeight: "600"
+                  }}
+                >
+                  Income
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setType("expense");
+                    setCategory("");
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    border: type === "expense" ? "2px solid #FF6B6B" : "2px solid #E7DDFF",
+                    borderRadius: "12px",
+                    background: type === "expense" ? "rgba(255, 107, 107, 0.1)" : "rgba(231, 221, 255, 0.05)",
+                    color: type === "expense" ? "#FF6B6B" : "#8B8B8B",
+                    cursor: "pointer",
+                    fontWeight: "600"
+                  }}
+                >
+                  Expense
+                </button>
+              </div>
+
+              <input
+                type="number"
+                placeholder="Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                style={{
+                  padding: "16px 20px",
+                  border: "2px solid #E7DDFF",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  outline: "none",
+                  background: "rgba(231, 221, 255, 0.05)"
+                }}
+              />
+
+              <input
+                type="text"
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                style={{
+                  padding: "16px 20px",
+                  border: "2px solid #E7DDFF",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  outline: "none",
+                  background: "rgba(231, 221, 255, 0.05)"
+                }}
+              />
+
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+                style={{
+                  padding: "16px 20px",
+                  border: "2px solid #E7DDFF",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  outline: "none",
+                  background: "rgba(231, 221, 255, 0.05)"
+                }}
+              >
+                <option value="">Select Category</option>
+                {type === "income" ? (
+                  <>
+                    <option value="Salary">Salary</option>
+                    <option value="Freelance">Freelance</option>
+                    <option value="Business">Business</option>
+                    <option value="Investment">Investment</option>
+                    <option value="Gift">Gift</option>
+                    <option value="Other">Other</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Food">Food</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Bills">Bills</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Other">Other</option>
+                  </>
+                )}
+              </select>
+
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                style={{
+                  padding: "16px 20px",
+                  border: "2px solid #E7DDFF",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  outline: "none",
+                  background: "rgba(231, 221, 255, 0.05)"
+                }}
+              />
+
+              <button
+                type="submit"
+                style={{
+                  background: "linear-gradient(135deg, #E7DDFF 0%, #D4C5FF 100%)",
+                  color: "#4A4A4A",
+                  padding: "16px",
+                  border: "none",
+                  borderRadius: "16px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  boxShadow: "0 8px 20px rgba(231, 221, 255, 0.4)"
+                }}
+              >
+                Add Transaction
+              </button>
+            </form>
+
+            <div style={{ textAlign: "center", marginTop: "20px" }}>
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#A084E8",
+                  cursor: "pointer",
+                  fontSize: "15px",
+                  fontWeight: "600"
+                }}
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default AddTransactionPage;

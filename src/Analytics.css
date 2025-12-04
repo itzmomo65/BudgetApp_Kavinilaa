@@ -1,0 +1,36 @@
+.analytics-page {
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+.analytics-content {
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 60px;
+}
+
+.loading-text {
+  color: #A084E8;
+  font-size: 18px;
+}
+
+.no-data {
+  color: #9ca3af;
+  padding: 40px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .analytics-page {
+    flex-direction: column;
+    padding: 10px;
+  }
+}
