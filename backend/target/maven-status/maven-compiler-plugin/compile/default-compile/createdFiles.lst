@@ -1,0 +1,3 @@
+com\infosys\dto\AuthResponse.class
+com\infosys\service\AuthService.class
+com\infosys\controller\AnalyticsController.class
